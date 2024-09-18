@@ -1,21 +1,22 @@
 const vertexShaderSource = `
     attribute vec2 a_position;
-attribute vec4 a_color;
-varying vec4 v_color;
-void main() {
-    gl_Position = vec4(a_position, 0, 1);
-    v_color = a_color;
-}`
-    ;
-
-const fragmentShaderSource = `
- precision mediump float;
+    attribute vec4 a_color;
+    uniform mat3 u_matrix;
+    uniform mat3 u_matrixscale;
+    varying vec4 v_color;
     void main() {
-        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); 
+        gl_Position = vec4(( u_matrixscale *u_matrix * vec3(a_position, 1)).xy, 0, 1);
+        v_color = a_color;
     }
 `;
 
-
+const fragmentShaderSource = `
+    precision mediump float;
+    varying vec4 v_color;
+    void main() {
+        gl_FragColor = v_color; 
+    }
+`;
 function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
     const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
@@ -42,63 +43,99 @@ function createShader(gl, type, source) {
     return shader;
 }
 
-
-
-const main = () =>
-{
+const main = () => {
     const canvas = document.querySelector('#canvas');
     const gl = canvas.getContext('webgl');
-    
 
-    const program = createProgram(gl,vertexShaderSource,fragmentShaderSource);
+    const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 
-    const positionAtribute = gl.getAttribLocation(program,"a_position");
-    const colorAtribute = gl.getAttribLocation(program,"a_color");
+    const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+    const colorAttributeLocation = gl.getAttribLocation(program, "a_color");
+    const matrixLocation = gl.getUniformLocation(program, "u_matrix");
+    const matrixScale = gl.getUniformLocation(program,"u_matrixscale");
 
-    //Set for pos
-    const posBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     const positions = [
-        -1, -1,
-        1, -1,
-        -1, 1,
-        -1, 1,
-        1, -1,
-        1, 1,
+        -0.5, -0.5,
+        0.5, -0.5,
+        -0.5, 0.5,
+        0.5, 0.5
     ];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
 
     const colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);
+    setInterval(() => {
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        const colors = [
+            Math.random(), Math.random(), Math.random(), 1,
+            Math.random(), Math.random(), Math.random(), 1,
+            Math.random(), Math.random(), Math.random(), 1,
+            Math.random(), Math.random(), Math.random(), 1
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    }, 1000 / 4);
 
-    const color = [
-        Math.random() *255 ,Math.random() *255,Math.random() *255,1,
-        Math.random() *255,Math.random() *255,Math.random() *255,1,
-        Math.random() *255,Math.random() *255,Math.random() *255,1
-    ]
-
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(color), gl.STATIC_DRAW);
 
 
-    //Setup pos for canvas
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    //Clear rect
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.useProgram(program);
+    let rotation = 0;
 
-    //SetupPos
+    function render() {
+        rotation += 0.01;
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.enableVertexAttribArray(positionAtribute);
-    gl.bindBuffer(gl.ARRAY_BUFFER,posBuffer);
-    gl.vertexAttribPointer(positionAtribute,2,gl.FlOAT,false,0,0);
+        gl.useProgram(program);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6)
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+
+
+
+
+
+        gl.enableVertexAttribArray(colorAttributeLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+
+
+        const scaleMatrix = createScaleMatrix(2, 2);
+        const matrix = [
+            Math.cos(rotation), -Math.sin(rotation), 0,
+            Math.sin(rotation), Math.cos(rotation), 0,
+            0, 0, 1
+        ];
+
+        gl.uniformMatrix3fv(matrixLocation, false, matrix);
+        gl.uniformMatrix3fv(matrixScale,false,scaleMatrix);
+
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        requestAnimationFrame(render);
+    }
+
+    render();
 }
 
 
+
+function createScaleMatrix(sx, sy) {
+    return new Float32Array([
+      sx, 0,  0,
+      0,  sy, 0,
+      0,  0,  1
+    ]);
+  }
+
+
+
 main();
+
+
+
