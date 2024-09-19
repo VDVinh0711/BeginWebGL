@@ -1,3 +1,6 @@
+
+
+
 const vertexShaderSource = `
     attribute vec2 a_position;
     attribute vec4 a_color;
@@ -49,11 +52,16 @@ const main = () => {
 
     const program = createProgram(gl, vertexShaderSource, fragmentShaderSource);
 
+    //get Atribute
     const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
     const colorAttributeLocation = gl.getAttribLocation(program, "a_color");
+
+    //get uniform
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
     const matrixScale = gl.getUniformLocation(program,"u_matrixscale");
 
+
+    //Buffer pos
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     const positions = [
@@ -65,6 +73,7 @@ const main = () => {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
 
+    //Bufer color
     const colorBuffer = gl.createBuffer();
     setInterval(() => {
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -79,18 +88,19 @@ const main = () => {
 
 
 
-
-
     let rotation = 0;
 
     function render() {
         rotation += 0.01;
+
+        //clear canvas
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(program);
 
+        //set pos
         gl.enableVertexAttribArray(positionAttributeLocation);
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
@@ -99,19 +109,23 @@ const main = () => {
 
 
 
-
+        //set color
         gl.enableVertexAttribArray(colorAttributeLocation);
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
         gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
 
 
-        const scaleMatrix = createScaleMatrix(2, 2);
+
+        //scale matrix
+        const scaleMatrix = createScaleMatrix(1, 1);
         const matrix = [
             Math.cos(rotation), -Math.sin(rotation), 0,
             Math.sin(rotation), Math.cos(rotation), 0,
             0, 0, 1
         ];
 
+
+        //set uniform
         gl.uniformMatrix3fv(matrixLocation, false, matrix);
         gl.uniformMatrix3fv(matrixScale,false,scaleMatrix);
 
@@ -134,8 +148,14 @@ function createScaleMatrix(sx, sy) {
   }
 
 
-
 main();
 
 
+function createScaleMatrix(sx, sy) {
+    return new Float32Array([
+        sx, 0, 0,
+        0, sy, 0,
+        0, 0, 1
+    ]);
+}
 
