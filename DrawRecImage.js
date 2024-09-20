@@ -136,7 +136,7 @@ const main = () => {
         gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
         gl.vertexAttribPointer(texCoordAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-        const scaleMatrix = createScaleMatrix(1, 1);
+        const scaleMatrix = createScaleMatrix(0.5, 0.5);
         const matrix = [
             Math.cos(rotation), -Math.sin(rotation), 0,
             Math.sin(rotation), Math.cos(rotation), 0,
@@ -152,7 +152,7 @@ const main = () => {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.uniform1i(imageLocation, 0);
 
-        gl.uniform2f(textureSizeLocation, image.width  , image.height    );
+        gl.uniform2f(textureSizeLocation, image.width * 1000 , image.height *1000 );
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
