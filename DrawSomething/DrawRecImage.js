@@ -1,11 +1,13 @@
+import { Matrix3 } from "../Utils/Matrix3Helper.js";
+
 const vertexShaderSource = `
     attribute vec2 a_position;
     attribute vec2 a_texCoord;
     uniform mat3 u_matrix;
-    uniform mat3 u_matrixscale;
+  
     varying vec2 v_texCoord;
     void main() {
-        gl_Position = vec4((u_matrixscale * u_matrix * vec3(a_position, 1)).xy, 0, 1);
+        gl_Position = vec4(( u_matrix * vec3(a_position, 1)).xy, 0, 1);
         v_texCoord = a_texCoord;
     }
 `;
@@ -66,7 +68,7 @@ const main = () => {
 
     //get uniform
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
-    const matrixScale = gl.getUniformLocation(program, "u_matrixscale");
+  
     const imageLocation = gl.getUniformLocation(program, "u_image");
 
     const textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
@@ -136,15 +138,26 @@ const main = () => {
         gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
         gl.vertexAttribPointer(texCoordAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-        const scaleMatrix = createScaleMatrix(0.5, 0.5);
-        const matrix = [
-            Math.cos(rotation), -Math.sin(rotation), 0,
-            Math.sin(rotation), Math.cos(rotation), 0,
-            0, 0, 1
-        ];
+        // const scaleMatrix = createScaleMatrix(0.5, 0.5);
+        // const matrix = [
+        //     Math.cos(rotation), -Math.sin(rotation), 0,
+        //     Math.sin(rotation), Math.cos(rotation), 0,
+        //     0, 0, 1
+        // ];
 
-        gl.uniformMatrix3fv(matrixLocation, false, matrix);
-        gl.uniformMatrix3fv(matrixScale, false, scaleMatrix);
+        //compine matrix
+        let matrixv2 = Matrix3.Indenity();
+        let translatetion = Matrix3.Translation(0.4,0);
+        let rotatetion = Matrix3.rotate(rotation);
+        let scaling = Matrix3.scaling(0.5,0.5);
+
+        matrixv2 = Matrix3.multiplyMatrix(matrixv2,translatetion);
+        matrixv2 = Matrix3.multiplyMatrix(matrixv2,rotatetion);
+        matrixv2 = Matrix3.multiplyMatrix(matrixv2,scaling);
+
+     
+        gl.uniformMatrix3fv(matrixLocation, false, matrixv2);
+       
 
 
         //set
