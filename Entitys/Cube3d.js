@@ -27,6 +27,7 @@ export class Cube {
 
 
         this.image = new Image();
+        this.onload = false;
         this.projectionMatrixLocation = null;
         this.modelViewMatrixLocation = null;
         this.initUniform();
@@ -87,40 +88,40 @@ export class Cube {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBuffer);
         const textureCoords = [
            // Front face
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
+           0.0, 0.0,
+            0.25, 0.0,
+            0.25, 0.5,
+            0.0, 0.5,
+
+            // Back face (top-right image)
+            0.25, 0.0,
+            0.5, 0.0,
+            0.5, 0.5,
+            0.25, 0.5,
+
+            // Top face (middle-left image)
+            0.0, 0.5,
+            0.25, 0.5,
+            0.25, 1.0,
             0.0, 1.0,
 
-            // Back face
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            0.0, 0.0,
+            // Bottom face (middle-right image)
+            0.25, 0.5,
+            0.5, 0.5,
+            0.5, 1.0,
+            0.25, 1.0,
 
-            // Top face
-            0.0, 1.0,
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
+            // Right face (bottom-left image)
+            0.5, 0.0,
+            0.75, 0.0,
+            0.75, 0.5,
+            0.5, 0.5,
 
-            // Bottom face
-            1.0, 1.0,
-            0.0, 1.0,
-            0.0, 0.0,
-            1.0, 0.0,
-
-           // Right face
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            0.0, 0.0,
-
-            // Left face
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            0.0, 1.0
+            // Left face (bottom-right image)
+            0.5, 0.5,
+            0.75, 0.5,
+            0.75, 1.0,
+            0.5, 1.0
         ];
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textureCoords), this.gl.STATIC_DRAW);
         this.indexBuffer = this.gl.createBuffer();
@@ -141,17 +142,30 @@ export class Cube {
         this.image.onload = () => {
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
             this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.image);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+            // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+            // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            // this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
 
+            if ( this.isPowerOf2(this.image.width) && this.isPowerOf2(this.image.height)) {
+                // Yes, it's a power of 2. Generate mips.
+                this.gl.generateMipmap(this.gl.TEXTURE_2D);
+             } else {
+                // No, it's not a power of 2. Turn of mips and set wrapping to clamp to edge
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+             }
+
+            this.onload = true;
 
         }
-        this.image.src = './cutechibi.jpg';
+        this.image.src = './noodles.jpg';
     }
 
     draw(projectionMatrix) {
+
+        if(!this.onload) return;
         const modelViewMatrix = mat4.create();
         mat4.translate(modelViewMatrix, modelViewMatrix, [this.positionX, this.positionY, this.positionZ]);
         mat4.rotate(modelViewMatrix, modelViewMatrix, this.rotationX, [this.rotationX, 0, 0]);
@@ -213,4 +227,9 @@ export class Cube {
         this.rotationX+=deltaTime;
         this.rotationY+=deltaTime;
     }
+
+
+    isPowerOf2(value) {
+        return (value & (value - 1)) === 0;
+      }
 }

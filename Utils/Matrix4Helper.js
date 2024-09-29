@@ -1,4 +1,5 @@
-export class Matrix4 {
+export class Matrix4
+{
     static Indenity() {
         return [
             1, 0, 0, 0,
@@ -181,22 +182,4 @@ export class Matrix4 {
                 (tmp_20 * m12 + tmp_23 * m22 + tmp_17 * m02))
         ];
     }
-
-    static LookAt(cameraPosition, target, up) {
-        var zAxis = normalize(
-            subtractVectors(cameraPosition, target));
-        var xAxis = normalize(cross(up, zAxis));
-        var yAxis = normalize(cross(zAxis, xAxis));
-
-        return [
-            xAxis[0], xAxis[1], xAxis[2], 0,
-            yAxis[0], yAxis[1], yAxis[2], 0,
-            zAxis[0], zAxis[1], zAxis[2], 0,
-            cameraPosition[0],
-            cameraPosition[1],
-            cameraPosition[2],
-            1,
-        ];
-    }
-  
 }
